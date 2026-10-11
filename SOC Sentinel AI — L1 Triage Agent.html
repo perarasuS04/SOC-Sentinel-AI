@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SOC Sentinel AI</title>
+<style>
+:root{
+  --bg:#0f1115; --card:#171a21; --text:#e7e9ee; --muted:#9aa1ad;
+  --border:#2b2f38; --accent:#6d93ff; --accent-bg:#1c2540;
+  --low:#2e9e4f; --med:#d98c15; --high:#d9441c; --crit:#b3131b;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f6f7f9; --card:#fff; --text:#1a1d23; --muted:#5b6270;
+    --border:#e1e4e9; --accent:#2457d9; --accent-bg:#eaf0ff;
+  }
+}
+:root[data-theme="light"]{ --bg:#f6f7f9; --card:#fff; --text:#1a1d23; --muted:#5b6270; --border:#e1e4e9; --accent:#2457d9; --accent-bg:#eaf0ff; }
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.4}
+.wrap{max-width:980px;margin:0 auto;padding:18px 14px 70px}
+h1{font-size:1.3rem;margin:2px 0}
+.sub{color:var(--muted);font-size:.85rem;margin-bottom:6px}
+.badge{display:inline-block;background:var(--accent-bg);color:var(--accent);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.03em}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.card h2{font-size:.92rem;margin:0 0 12px;color:var(--accent);display:flex;align-items:center;flex-wrap:wrap;gap:8px;row-gap:4px}
+.card h2 .pushright{margin-left:auto}
+label{display:block;font-size:.76rem;color:var(--muted);margin:7px 0 3px}
+label:first-child{margin-top:0}
+input,select,textarea{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.85rem;font-family:inherit}
+textarea{resize:vertical;min-height:70px;font-family:monospace;font-size:.78rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media(max-width:620px){.grid3,.grid2{grid-template-columns:1fr}}
+.chk{display:flex;align-items:flex-start;gap:8px;margin:6px 0;font-size:.83rem}
+.chk input{width:auto;margin-top:3px}
+button{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:10px 14px;font-size:.87rem;font-weight:600;cursor:pointer;transition:filter .12s,transform .12s}
+button:hover{filter:brightness(1.1)}
+button:active{transform:scale(.98)}
+button.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button.secondary:hover{background:var(--accent-bg)}
+button.block{width:100%;margin-top:8px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;color:#fff}
+.pill.Low{background:var(--low)} .pill.Medium{background:var(--med)}
+.pill.High{background:var(--high)} .pill.Critical{background:var(--crit)}
+.pill.gray{background:#555}
+pre{white-space:pre-wrap;word-break:break-word;font-size:.78rem;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:11px;max-height:360px;overflow-y:auto}
+ul{margin:4px 0;padding-left:18px;font-size:.83rem}
+a{color:var(--accent)}
+.hint{font-size:.72rem;color:var(--muted)}
+.dashrowlabel{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 6px}
+.dashrowlabel:first-child{margin-top:0}
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px}
+.dcard{background:var(--bg);border:1px solid var(--border);border-top:3px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.dcard b{font-size:1.25rem;display:block}
+.dcard span{font-size:.68rem;color:var(--muted)}
+.dempty{font-size:.8rem;color:var(--muted);padding:10px 2px}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th,td{border-bottom:1px solid var(--border);text-align:left;padding:7px 6px}
+th{color:var(--muted);font-weight:600}
+tbody tr:hover{background:var(--bg)}
+.tl{border-left:2px solid var(--border);margin-left:6px;padding-left:12px}
+.tlitem{position:relative;margin-bottom:8px;font-size:.82rem}
+.tlitem:before{content:"";position:absolute;left:-16px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.result{display:none}.result.show{display:block}
+.sec{display:none}.sec.show{display:block}
+details{font-size:.82rem}
+summary{cursor:pointer;color:var(--accent);font-weight:600}
+.ioc{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:3px 9px;font-size:.74rem;margin:3px 4px 0 0;cursor:pointer;user-select:none}
+.ioc.Malicious{border-color:var(--crit);color:var(--crit)} .ioc.Benign{border-color:var(--low);color:var(--low)} .ioc.Internal{border-color:var(--accent);color:var(--accent)}
+.errbox{background:#3a1414;border:1px solid var(--crit);color:#ffb4b4;padding:8px 10px;border-radius:7px;font-size:.8rem;margin-top:8px}
+.warnbox{background:#3a2e10;border:1px solid var(--med);color:#ffd27a;padding:8px 10px;border-radius:7px;font-size:.8rem;margin-top:8px}
+.tip{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:help;color:var(--accent);font-weight:700;margin-left:5px;font-size:.68rem;border:1px solid var(--accent);border-radius:50%;width:15px;height:15px}
+.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;left:0;top:140%;background:#15171c;color:#eee;padding:8px 10px;border-radius:7px;font-size:.72rem;font-weight:400;width:230px;z-index:80;box-shadow:0 4px 14px rgba(0,0,0,.4);white-space:normal;line-height:1.35;border:1px solid #333}
+.steps{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:10px 0}
+.stepchip{flex:0 0 auto;font-size:.68rem;padding:5px 9px;border-radius:14px;background:var(--bg);border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.stepchip.current{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:700}
+.stepchip.done{border-color:var(--low);color:var(--low)}
+.stepchip.requires{background:#3a1414;border-color:var(--crit);color:#ffb4b4;font-weight:700}
+.navlink{display:inline-block;font-size:.76rem;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:3px 10px;margin:3px 4px 0 0;color:var(--text);text-decoration:none}
+.demobanner{background:linear-gradient(90deg,#3a2e10,#1c2540);border:1px solid var(--med);color:#ffd27a;padding:8px 12px;border-radius:8px;font-size:.78rem;font-weight:700;letter-spacing:.03em;margin-bottom:12px;text-align:center}
+.hitl{background:var(--accent-bg);border:1px solid var(--accent);color:var(--text);padding:9px 11px;border-radius:8px;font-size:.78rem;margin-bottom:10px}
+.qtable{width:100%;border-collapse:collapse;font-size:.74rem}
+.qtable th,.qtable td{border-bottom:1px solid var(--border);padding:6px 5px;text-align:left;white-space:nowrap}
+.qtable tbody tr{cursor:pointer}
+.qtable tbody tr:hover{background:var(--bg)}
+.sbadge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.68rem;font-weight:700}
+.sbadge.New{background:#2a3550;color:#9db4ff}.sbadge.Investigating{background:#3a2e10;color:#ffd27a}
+.sbadge.Resolved{background:#1d3a24;color:#6fd68a}
+.sbadge.Escalated{background:#3a1414;color:#ffb4b4}
+.decisionrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.decisionrow button{flex:1 1 150px}
+.decisionrow button.active{outline:3px solid #fff3;outline-offset:1px}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary.active{background:var(--accent-bg);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🛡️ SOC Sentinel AI <span class="badge">L1 TRIAGE AGENT</span></h1>
+  <div class="sub">Alert → Normalize → Investigate → Correlate → Score → MITRE Map → Decide → Report → Escalate</div>
+
+  <div class="card" id="sec-dash">
+    <h2>Shift dashboard <span class="tip" tabindex="0" data-tip="A real SOC shift starts here: queue volume and verdict mix at a glance, before touching any single alert.">ⓘ</span></h2>
+    <div id="dash"></div>
+  </div>
+
+  <div class="demobanner">🎓 DEMO / TRAINING MODE — all alerts, IOCs and history below are fictional sample data for portfolio/interview use</div>
+
+  <div class="card">
+    <h2>Current investigation progress <span class="tip" tabindex="0" data-tip="Tracks where the alert you're actively working stands in the L1 workflow — separate from the shift-level dashboard above.">ⓘ</span></h2>
+    <div class="steps" id="steps"></div>
+    <div class="hint" style="margin-top:6px">● Completed &nbsp; ● In Progress &nbsp; ● Requires Analyst &nbsp; ○ Waiting</div>
+  </div>
+
+  <div class="card" id="sec-queue">
+    <h2>Alert queue <span class="tip" tabindex="0" data-tip="A real L1 analyst works from a shared queue, not one alert typed in manually. Click any row to open it in the investigation workflow below.">ⓘ</span></h2>
+    <div class="btnrow">
+      <input id="qSearch" placeholder="Search alert ID, host, user..." oninput="renderQueue()" style="flex:2 1 160px">
+      <select id="qFiltSev" onchange="renderQueue()" style="flex:1 1 100px"><option value="">All severities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      <select id="qFiltStatus" onchange="renderQueue()" style="flex:1 1 100px"><option value="">All statuses</option><option>New</option><option>Investigating</option><option>Closed</option></select>
+    </div>
+    <div style="overflow-x:auto;margin-top:8px"><table class="qtable" id="queueTable"><thead><tr>
+      <th>Alert ID</th><th>Time</th><th>Severity</th><th>Type</th><th>Source</th><th>User</th><th>Host</th><th>Source IP</th><th>Status</th><th>Assigned</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card" id="sec-wazuh">
+    <h2>Wazuh alert import <span class="pill gray" id="wazuhStatus">● Simulation Mode</span>
+      <span class="tip" tabindex="0" data-tip="Normalizes Wazuh-style alert JSON into the same internal format the investigation workflow above already uses. No live Wazuh server is connected — this is a demo/training integration layer.">ⓘ</span></h2>
+    <div class="demobanner" style="margin-bottom:10px">🧪 WAZUH SIMULATION / TRAINING DATA — fictional alerts only, no live Wazuh server connected</div>
+    <div class="btnrow">
+      <select id="wazuhDemoSel" onchange="if(this.value!=='')loadWazuhDemo(this.value)">
+        <option value="">— Load Wazuh demo —</option>
+        <option value="0">Windows failed authentication</option>
+        <option value="1">Suspicious PowerShell</option>
+        <option value="2">Linux authentication anomaly</option>
+        <option value="3">File integrity monitoring</option>
+        <option value="4">Privilege escalation indicator</option>
+      </select>
+      <label class="secondary" style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--accent);color:var(--accent);border-radius:7px;padding:8px 12px;cursor:pointer;font-size:.87rem;font-weight:600;margin:0">
+        📁 Upload JSON <input type="file" accept=".json,application/json" style="display:none" onchange="wazuhFileUpload(this)">
+      </label>
+    </div>
+    <label>Paste Wazuh alert JSON</label>
+    <textarea id="wazuhPaste" placeholder='{"rule":{"id":"5710","level":10,"description":"..."}, "agent":{"name":"SRV-WEB02"}, "data":{"srcip":"...","user":"..."}}' style="min-height:100px;font-family:monospace;font-size:.72rem"></textarea>
+    <div id="wazuhError" class="errbox" style="display:none"></div>
+    <div class="btnrow">
+      <button onclick="validateWazuh()">✔ Validate &amp; normalize</button>
+      <button class="secondary" id="wazuhSendBtn" onclick="sendWazuhToWorkflow()" disabled>➡ Send to investigation workflow</button>
+    </div>
+    <div class="btnrow" style="margin-top:10px">
+      <button class="secondary" id="wazuhTabRaw" onclick="switchWazuhTab('raw')">Raw Wazuh event</button>
+      <button class="secondary" id="wazuhTabNorm" onclick="switchWazuhTab('norm')">Normalized event</button>
+    </div>
+    <pre id="wazuhRawView" style="margin-top:8px"></pre>
+    <div id="wazuhNormView" style="display:none;font-size:.82rem;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:11px"></div>
+  </div>
+
+  <div class="card"><details>
+    <summary>🎤 5-minute interview demo script (click to expand)</summary>
+    <p class="hint">Suggested walkthrough if asked "show me a project you built." Total ≈5 min. Click a step to jump to that section.</p>
+    <ol style="font-size:.84rem;padding-left:20px">
+      <li><b>(30s)</b> <a class="navlink" href="#sec-intake">Load a scenario</a> — "This loads a realistic alert, exactly as it'd arrive from a SIEM."</li>
+      <li><b>(30s)</b> <a class="navlink" href="#sec-parser">Point out the parser</a> — "It separates what's actually in the log from what I'm assuming, so I never invent evidence."</li>
+      <li><b>(45s)</b> <a class="navlink" href="#sec-mitre">Open MITRE mapping</a> — "It surfaces up to 3 candidate techniques with confidence, not one false-certain guess."</li>
+      <li><b>(45s)</b> <a class="navlink" href="#sec-risk">Explain the risk score</a> — "Every point is traceable to a factor — technique severity, asset value, IOC confirmation — and it's compared against the vendor's own severity rating."</li>
+      <li><b>(30s)</b> <a class="navlink" href="#sec-checklist">Walk the checklist</a> — "This is the actual L1 investigation steps, not just a form field."</li>
+      <li><b>(30s)</b> <a class="navlink" href="#sec-ioc">Click an IOC badge</a> — "I can record what I found after a real lookup — it isn't stuck saying 'unknown' forever."</li>
+      <li><b>(45s)</b> <a class="navlink" href="#sec-verdict">Compute the verdict</a> — "Confidence is capped if I haven't actually done the investigation — it won't let me fake thoroughness."</li>
+      <li><b>(30s)</b> <a class="navlink" href="#sec-actions">Generate the report / escalate</a> — "One click produces something I could paste straight into a ticket, with a stable incident ID."</li>
+      <li><b>(15s)</b> <a class="navlink" href="#sec-dash">Back to the dashboard</a> — "And it rolls up into the shift-level view."</li>
+    </ol>
+  </details></div>
+
+  <div class="card" id="sec-intake">
+    <h2>1 · Alert intake <span class="hint">DEMO DATA where sample-loaded</span></h2>
+    <label>Demo mode — load by scenario</label>
+    <select id="demoSel" onchange="loadDemo(this.value)">
+      <option value="">— choose a scenario —</option>
+      <option value="brute">Brute Force</option>
+      <option value="ps">Suspicious PowerShell</option>
+      <option value="privesc">Privilege Escalation</option>
+      <option value="malware">Malware Detection</option>
+      <option value="unusual">Unusual Login Activity</option>
+      <option value="benign">Benign Admin Login</option>
+    </select>
+    <div class="btnrow"><button class="secondary" onclick="loadRandomSample()">🎲 Load random sample alert</button>
+      <button class="secondary" onclick="clearForm()">Clear form</button></div>
+
+    <div class="grid3" style="margin-top:10px">
+      <div><label>Alert ID</label><input id="f_aid" placeholder="ALT-1001"></div>
+      <div><label>Alert name</label><input id="f_name" placeholder="e.g. Brute Force Authentication Pattern"></div>
+      <div><label>Alert source</label><select id="f_source"><option>Splunk</option><option>Wazuh</option><option>Windows</option><option>Sysmon</option><option>Firewall</option><option>EDR</option></select></div>
+      <div><label>Category</label><input id="f_cat" placeholder="Authentication / Execution..."></div>
+      <div><label>User</label><input id="f_user"></div>
+      <div><label>Host</label><input id="f_host"></div>
+      <div><label>Source IP</label><input id="f_srcip"></div>
+      <div><label>Destination IP</label><input id="f_dstip"></div>
+      <div><label>Timestamp</label><input id="f_time"></div>
+      <div><label>Event ID / Alert name</label><input id="f_eid"></div>
+      <div><label>Asset criticality</label><select id="f_asset"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></div>
+      <div><label>Status</label><select id="f_status" onchange="logStatusChange()"><option>New</option><option>Investigating</option><option>Escalated</option><option>Resolved</option></select></div>
+      <div><label>Source-reported severity <span class="hint">(as set by the SIEM/EDR itself)</span></label><select id="f_srcsev"><option>Informational</option><option selected>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+    </div>
+    <label>Raw log / description</label>
+    <textarea id="f_desc" placeholder="Paste the raw log line..."></textarea>
+    <label>Analyst notes</label>
+    <textarea id="f_notes" placeholder="Free-text notes..." style="min-height:40px"></textarea>
+    <div id="formError" class="errbox" style="display:none"></div>
+    <button class="block" onclick="runFull()">▶ Parse, analyze &amp; triage this alert</button>
+    <div class="hint" style="margin-top:6px">Your inputs auto-save locally. After a page refresh, re-click this button to regenerate the analysis panels below.</div>
+  </div>
+
+  <div id="results" class="result">
+
+  <div class="card" id="sec-parser"><h2>2 · Automatic log parser <span class="tip" tabindex="0" data-tip="Never invent evidence. Good triage separates what a log actually proves from what you're assuming — a common interview question is 'how do you avoid confirmation bias?'">ⓘ</span></h2>
+    <div class="grid3">
+      <div><b>Observed (found in raw log)</b><div id="obs"></div></div>
+      <div><b>Inferred (from form, not in log)</b><div id="inf"></div></div>
+      <div><b>Unknown</b><div id="unk"></div></div>
+    </div>
+  </div>
+
+  <div class="card" id="sec-analysis"><h2>3 · AI alert analysis</h2><div id="analysis"></div>
+    <div class="grid2" style="margin-top:10px">
+      <div><b style="color:var(--crit)">Evidence supporting detection</b><ul id="evFor"></ul></div>
+      <div><b style="color:var(--low)">Evidence against detection</b><ul id="evAgainst"></ul></div>
+    </div>
+  </div>
+
+  <div class="card" id="sec-risk"><h2>4 · Risk score <span class="tip" tabindex="0" data-tip="Risk = technique severity × asset criticality, adjusted for confirmed evidence. Transparent scoring means every point can be defended to a manager or auditor — unlike a black-box 'AI says critical'.">ⓘ</span></h2>
+    <div style="margin-bottom:8px"><span id="riskPill" class="pill"></span> <b id="riskNum" style="font-size:1.1rem"></b>/100 <span class="hint">computed risk — independent of source-reported severity</span></div>
+    <details open><summary>How was this score calculated?</summary><ul id="riskFactors"></ul></details>
+    <div id="riskFlag"></div>
+    <div id="wazuhRiskNote" class="hint" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card" id="sec-corr"><h2>5 · Demo Correlation Engine <span class="tip" tabindex="0" data-tip="Correlation means linking related events across time/hosts into one story, instead of treating each alert in isolation. This engine is simulated — not connected to a live SIEM.">ⓘ</span></h2>
+    <div class="hint" style="margin-bottom:6px">Simulated — not connected to a real SIEM.</div>
+    <div id="corrStats" style="margin-bottom:8px"></div>
+    <div class="tl" id="corr"></div></div>
+
+  <div class="card" id="sec-checklist"><h2>6 · Investigation checklist <span class="tip" tabindex="0" data-tip="This is the actual L1 runbook: a repeatable, auditable set of steps so two analysts reach the same conclusion from the same evidence.">ⓘ</span></h2><div id="checklist"></div></div>
+
+  <div class="card" id="sec-mitre"><h2>7 · MITRE ATT&amp;CK mapping <span class="tip" tabindex="0" data-tip="MITRE ATT&CK is the industry-standard catalog of attacker techniques (e.g. T1110 = Brute Force). Mapping alerts to it lets teams talk in a shared language and measure detection coverage.">ⓘ</span></h2>
+    <div class="hint" style="margin-bottom:6px">Up to 3 matching techniques shown, highest-confidence first — a real alert is rarely just one technique.</div>
+    <div id="mitre"></div></div>
+
+  <div class="card" id="sec-ioc"><h2>8 · IOC analysis <span class="tip" tabindex="0" data-tip="IOC = Indicator of Compromise: an IP, hash, domain, or username observed in an incident. On its own an IOC isn't proof of anything — it has to be checked against context and intel before you trust it.">ⓘ</span></h2>
+    <div class="hint" style="margin-bottom:6px">Click a badge to record what you found: Unknown → Benign → Malicious → Internal.</div>
+    <div id="iocs"></div></div>
+
+  <div class="card" id="sec-tp"><h2>9 · True-positive signals <span class="tip" tabindex="0" data-tip="True Positive = the alert correctly caught real malicious/unauthorized activity. False Positive = the alert fired but the activity was legitimate. Getting this call right, and justifying it, is the core of the L1 job.">ⓘ</span></h2>
+    <div class="chk"><input type="checkbox" id="t1"><span>Behavior deviates from this user/host's baseline</span></div>
+    <div class="chk"><input type="checkbox" id="t2"><span>Source indicator is external/unknown, not whitelisted</span></div>
+    <div class="chk"><input type="checkbox" id="t3"><span>Follow-on activity observed (new process, persistence, lateral movement)</span></div>
+    <div class="chk"><input type="checkbox" id="t4"><span>User denies performing the action, when reachable</span></div>
+    <div class="chk"><input type="checkbox" id="t5"><span>No legitimate business/change-ticket explanation found</span></div>
+    <button class="secondary" onclick="computeVerdict()">Compute triage decision</button>
+  </div>
+
+  <div class="hitl">🧑‍💻 <b>Human-in-the-loop:</b> this tool provides investigation assistance and a suggested verdict. Final incident classification and escalation decisions remain with the human analyst — nothing below blocks an IP, disables an account, or kills a process automatically.</div>
+
+  <div class="card" id="sec-verdict"><h2>10 · Triage decision <span class="tip" tabindex="0" data-tip="Confidence here should scale with how much evidence you actually gathered — stating 'High confidence' after skipping the checklist is the single fastest way to lose credibility with an L2 analyst.">ⓘ</span></h2>
+    <div class="hint" style="margin-bottom:4px">AI-suggested verdict (from the checklist + signals above):</div>
+    <div id="verdictBox"></div>
+    <div class="hint" style="margin:10px 0 4px">L1 analyst decision — your call, not the AI's:</div>
+    <div class="decisionrow">
+      <button class="secondary" id="decFP" onclick="setDecision('False Positive')">False Positive</button>
+      <button class="secondary" id="decTP" onclick="setDecision('True Positive')">True Positive</button>
+      <button class="secondary" id="decEsc" onclick="setDecision('Escalate to L2')">Escalate to L2</button>
+      <button class="secondary" id="decMore" onclick="setDecision('Needs More Evidence')">Needs More Evidence</button>
+    </div>
+    <div id="decisionBox" class="hint"></div>
+  </div>
+
+  <div class="card" id="sec-summary"><h2>Investigation summary <span class="tip" tabindex="0" data-tip="A one-screen rollup of the alert, risk, evidence, next steps, notes and final decision — everything above, in one place for a quick handoff or interview walkthrough.">ⓘ</span></h2><div id="summaryBox" class="hint">Run triage above to populate this summary.</div></div>
+
+  <div class="card" id="sec-actions"><h2>Actions <span class="tip" tabindex="0" data-tip="L1 → L2 escalation means handing a validated, well-documented incident to a more senior/specialized analyst because it needs deeper investigation or formal incident response — not a dumping ground for anything you're unsure about.">ⓘ</span></h2>
+    <div class="btnrow">
+      <button onclick="genReport()">📄 Generate incident report</button>
+      <button onclick="genEscalation()">🎫 Generate incident ticket (L1→L2)</button>
+      <button class="secondary" onclick="saveToHistory()">💾 Save alert to history</button>
+    </div>
+    <div id="outputLabel" class="hint" style="margin-top:8px"></div>
+    <pre id="output" style="margin-top:4px;display:none"></pre>
+    <div class="btnrow" id="outputBtns" style="display:none;margin-top:0">
+      <button class="secondary" id="copyBtn" onclick="copyOutput()">Copy</button>
+      <button class="secondary" onclick="downloadOutput()">Download .txt</button>
+    </div>
+  </div>
+
+  <div class="card" id="sec-audit"><h2>Audit trail <span class="tip" tabindex="0" data-tip="A timestamped record of every action taken on an alert — this is what lets a SOC reconstruct 'who did what, when' during a post-incident review or compliance audit.">ⓘ</span></h2><ul id="audit"></ul></div>
+
+  </div>
+
+  <div class="card"><h2>Case history <span class="hint">— Local Demo History, this browser only</span> <span class="tip" tabindex="0" data-tip="Stored in this browser's localStorage only. This is not a shared enterprise SOC database — closing or clearing browser data erases it.">ⓘ</span></h2>
+    <div class="btnrow">
+      <input id="histSearch" placeholder="Search by ID/host/user..." oninput="renderTable()" style="flex:2 1 160px">
+      <select id="filtSev" onchange="renderTable()"><option value="">All severities</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+      <select id="filtVerdict" onchange="renderTable()"><option value="">All verdicts</option><option>True Positive</option><option>False Positive</option><option>Needs Investigation</option></select>
+      <button class="secondary" onclick="clearHistory()">Clear history</button>
+    </div>
+    <div class="hint" style="margin-bottom:4px">Click any row to reopen that case.</div>
+    <div style="overflow-x:auto;margin-top:0"><table id="histTable"><thead><tr><th>ID</th><th>Time</th><th>Host</th><th>User</th><th>Severity</th><th>Risk</th><th>Decision</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="card"><details><summary>About this project</summary>
+    <p><b>Problem:</b> L1 SOC analysts manually repeat the same triage steps for every alert — slow and inconsistent.</p>
+    <p><b>Solution:</b> A single-page assistant that normalizes an alert, extracts indicators, scores risk transparently, maps to MITRE ATT&amp;CK, and produces a ready-to-send report or L2 escalation ticket.</p>
+    <p><b>Technology:</b> Vanilla HTML/CSS/JS, rule-based detection logic, browser localStorage for alert history — no backend, no external calls.</p>
+    <p><b>SOC workflow modeled:</b> Alert → Normalize → Investigate → Correlate → Risk Score → MITRE Mapping → Triage Decision → Report → L2 Escalation.</p>
+    <p><b>Key features:</b> log parser, transparent risk scoring, MITRE mapping with confidence, 4-state investigation checklist, IOC badges, audit trail, alert history dashboard.</p>
+    <p><b>Future improvements:</b> live threat-intel API integration, a conversational copilot panel, real alert-volume trend charting, SOAR-style auto-containment actions.</p>
+  </details></div>
+
+</div>
+<script>
+const TECH = [
+ {kw:["vssadmin","shadow copy","bcdedit","ransom"],id:"T1490",name:"Inhibit System Recovery",tactic:"Impact",w:5,
+  contain:["Isolate host from network immediately","Preserve disk/memory for forensics","Verify backups are intact and offline"]},
+ {kw:["lsass","mimikatz","credential dump"],id:"T1003",name:"OS Credential Dumping (LSASS)",tactic:"Credential Access",w:5,
+  contain:["Isolate host","Reset exposed credentials","Rotate krbtgt if domain-wide exposure suspected"]},
+ {kw:["powershell","encoded command","iex","downloadstring","-enc "],id:"T1059.001",name:"PowerShell",tactic:"Execution",w:4,
+  contain:["Isolate host pending review","Kill malicious process","Check persistence (tasks/services/run keys)"]},
+ {kw:["exfil","large upload","data transfer"],id:"T1041",name:"Exfiltration Over C2 Channel",tactic:"Exfiltration",w:4,
+  contain:["Block destination at perimeter","Isolate host","Inventory data potentially exposed"]},
+ {kw:["new administrator","new admin account","added to administrators","net localgroup administrators"],id:"T1136.001",name:"Create Account: Local Account",tactic:"Persistence",w:4,
+  contain:["Disable the new account pending verification","Confirm with account owner/change ticket","Review who created the account"]},
+ {kw:["scheduled task","schtasks","at.exe"],id:"T1053.005",name:"Scheduled Task",tactic:"Execution / Persistence",w:3,
+  contain:["Review and remove unauthorized task","Check task-owner account for compromise"]},
+ {kw:["new service","sc create","service install"],id:"T1543.003",name:"Windows Service",tactic:"Persistence",w:3,
+  contain:["Review and remove unauthorized service","Check binary path for malicious payload"]},
+ {kw:["rdp","remote desktop","logon type 10","3389"],id:"T1021.001",name:"Remote Desktop Protocol",tactic:"Lateral Movement",w:3,
+  contain:["Verify session was authorized","Restrict RDP exposure / require VPN"]},
+ {kw:["impossible travel","login from","two countries","geo-velocity"],id:"T1078",name:"Valid Accounts",tactic:"Initial Access / Defense Evasion",w:4,
+  contain:["Force password reset and re-auth with MFA","Review active sessions for the account"]},
+ {kw:["usb","removable media","mass storage device"],id:"T1091",name:"Replication Through Removable Media",tactic:"Lateral Movement",w:2,
+  contain:["Confirm device/user against policy","Scan device if available"]},
+ {kw:["malware","trojan","virus detected","quarantine"],id:"T1204",name:"User Execution (malware detection)",tactic:"Execution",w:4,
+  contain:["Confirm EDR quarantine succeeded","Isolate host if not contained","Scan for lateral spread"]},
+ {kw:["4625","failed login","brute","auth fail","invalid password","failed password"],id:"T1110",name:"Brute Force",tactic:"Credential Access",w:2,
+  contain:["Block source IP at edge","Confirm account lockout policy enforced"]}
+];
+const SAMPLES = {
+ brute:[{aid:"ALT-1001",source:"Windows",cat:"Authentication",user:"jsmith",host:"WKS-012",srcip:"203.0.113.44",dstip:"10.0.1.12",time:"2026-10-04 02:10 UTC",eid:"4625",asset:"Medium",
+  type:"Brute Force Authentication Pattern",qsev:"Medium",status:"New",assigned:"Unassigned",
+  desc:"EventID=4625 Account Name: jsmith Source Network Address: 203.0.113.44 Workstation Name: WKS-012 Logon Type: 3 Failure Reason: Unknown user name or bad password (x14 in 3 min)"}],
+ ps:[{aid:"ALT-1002",source:"Sysmon",cat:"Execution",user:"svc_backup",host:"SRV-DB01",srcip:"10.0.2.5",dstip:"",time:"2026-10-04 03:44 UTC",eid:"Sysmon 1",asset:"High",
+  type:"Suspicious PowerShell Activity",qsev:"High",status:"New",assigned:"Unassigned",
+  desc:"ProcessCreate Image: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe CommandLine: powershell.exe -enc JABzAD0A... ParentImage: winword.exe User: svc_backup"}],
+ privesc:[{aid:"ALT-1003",source:"Windows",cat:"Persistence",user:"temp_intern",host:"WKS-055",srcip:"10.0.1.55",dstip:"",time:"2026-10-04 09:02 UTC",eid:"4732",asset:"High",
+  type:"Privilege Escalation",qsev:"High",status:"Investigating",assigned:"L1 Analyst",
+  desc:"EventID=4732 A member was added to a security-enabled local group. Account Name: temp_intern Group: Administrators net localgroup administrators temp_intern /add"}],
+ malware:[{aid:"ALT-1004",source:"EDR",cat:"Malware",user:"rpatel",host:"WKS-099",srcip:"10.0.1.99",dstip:"203.0.113.77",time:"2026-10-04 11:15 UTC",eid:"EDR-TROJ-220",asset:"Medium",
+  type:"Malware Detection",qsev:"Critical",status:"New",assigned:"Unassigned",
+  desc:"Malware detected: Trojan.GenericKD.xyz file C:\\Users\\rpatel\\Downloads\\invoice.exe quarantine action=blocked outbound connection attempted to 203.0.113.77"}],
+ benign:[{aid:"ALT-1005",source:"Windows",cat:"Authentication",user:"admin_ops",host:"SRV-WEB02",srcip:"10.0.0.9",dstip:"10.0.0.9",time:"2026-10-04 14:00 UTC",eid:"4624",asset:"Low",
+  type:"Multiple Failed Logins",qsev:"Low",status:"Investigating",assigned:"L1 Analyst",
+  desc:"EventID=4624 Account Name: admin_ops Logon Type: 10 Source Network Address: 10.0.0.9 scheduled maintenance window change ticket CHG-4471 approved"}],
+ unusual:[{aid:"ALT-1007",source:"Windows",cat:"Authentication",user:"ceo_assistant",host:"LAPTOP-07",srcip:"198.51.100.23",dstip:"",time:"2026-10-04 04:12 UTC",eid:"4624",asset:"High",
+  type:"Impossible Travel Login",qsev:"High",status:"New",assigned:"Unassigned",
+  desc:"EventID=4624 Account Name: ceo_assistant impossible travel login from 198.51.100.23 two countries within 40 minutes of prior login"}]
+};
+const ALL_SAMPLES = [].concat(...Object.values(SAMPLES),
+ [{aid:"ALT-1006",source:"Firewall",cat:"Network",user:"",host:"SRV-FS01",srcip:"10.0.3.20",dstip:"192.0.2.44",time:"2026-10-04 23:50 UTC",eid:"FW-OUT-ANOM",asset:"Medium",
+   type:"Suspicious Network Connection",qsev:"High",status:"New",assigned:"Unassigned",
+   desc:"Unusual outbound connection: SRV-FS01 10.0.3.20 -> 192.0.2.44 port 4444 large upload 2.3GB over 10 minutes exfil pattern"},
+  {aid:"ALT-1008",source:"EDR",cat:"Hardware",user:"ksingh",host:"WKS-031",srcip:"10.0.1.31",dstip:"",time:"2026-10-04 10:30 UTC",eid:"EDR-USB-01",asset:"Low",
+   type:"Endpoint Security Alert",qsev:"Low",status:"Resolved",assigned:"L1 Analyst",
+   desc:"Removable media / USB mass storage device inserted by ksingh on WKS-031 device ID matches approved asset list"},
+  {aid:"ALT-1009",source:"Windows",cat:"Persistence",user:"svc_report",host:"SRV-APP03",srcip:"10.0.2.9",dstip:"",time:"2026-10-04 01:05 UTC",eid:"4698",asset:"Medium",
+   type:"Unusual Process Execution",qsev:"Medium",status:"New",assigned:"Unassigned",
+   desc:"New scheduled task created schtasks /create /tn Updater /tr C:\\temp\\upd.exe /sc onlogon User Context: svc_report not in change log"},
+  {aid:"ALT-1010",source:"Windows",cat:"Authentication",user:"it_admin",host:"SRV-DC01",srcip:"10.0.0.5",dstip:"10.0.0.5",time:"2026-10-04 15:20 UTC",eid:"4624",asset:"Critical",
+   type:"Account Lockout",qsev:"Low",status:"Resolved",assigned:"L1 Analyst",
+   desc:"EventID=4624 Account Name: it_admin Logon Type: 2 routine administrative login during approved maintenance window CHG-4490"}]);
+// ===== Wazuh integration layer (SAFE SIMULATION MODE — no live Wazuh server connected) =====
+// Future backend should read these from server-side environment variables, never from frontend code:
+//   WAZUH_API_URL, WAZUH_API_USER, WAZUH_API_PASSWORD   (no real values here — placeholders only)
+const WAZUH_DEMOS = [
+ {timestamp:"2026-10-05T02:10:11.000Z",rule:{id:"5710",description:"Multiple Windows authentication failures.",level:10,groups:["authentication_failures","windows"]},
+  agent:{id:"007",name:"SRV-WEB02",ip:"10.0.0.9"},location:"WinEvtLog",decoder:{name:"windows_eventchannel"},
+  data:{srcip:"203.0.113.44",dstip:"10.0.0.9",user:"admin_ops"},
+  full_log:"EventID=4625 Account Name: admin_ops Source Network Address: 203.0.113.44 Logon Type: 3 (x12 in 4 min)"},
+ {timestamp:"2026-10-05T03:44:02.000Z",rule:{id:"91530",description:"Suspicious PowerShell command line detected.",level:12,groups:["sysmon","execution"]},
+  agent:{id:"014",name:"SRV-DB01",ip:"10.0.2.5"},location:"sysmon",decoder:{name:"sysmon"},
+  data:{srcip:"10.0.2.5",user:"svc_backup",command:"powershell.exe -enc JABzAD0A...",path:"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"},
+  full_log:"ProcessCreate Image: powershell.exe CommandLine: powershell.exe -enc JABzAD0A... ParentImage: winword.exe"},
+ {timestamp:"2026-10-05T05:02:00.000Z",rule:{id:"5716",description:"SSHD authentication failed repeatedly.",level:8,groups:["authentication_failures","linux","sshd"]},
+  agent:{id:"021",name:"lnx-app03",ip:"10.0.4.12"},location:"/var/log/auth.log",decoder:{name:"sshd"},
+  data:{srcip:"198.51.100.22",dstip:"10.0.4.12",user:"deploy",srcport:"52344"},
+  full_log:"sshd[2211]: Failed password for deploy from 198.51.100.22 port 52344 ssh2 (x9 in 2 min)"},
+ {timestamp:"2026-10-05T06:30:00.000Z",rule:{id:"550",description:"Integrity checksum changed for a critical system file.",level:7,groups:["syscheck"]},
+  agent:{id:"009",name:"SRV-APP03",ip:"10.0.2.9"},location:"syscheck",decoder:{name:"syscheck_integrity_changed"},
+  data:{path:"/etc/passwd",user:"root"},
+  full_log:"File '/etc/passwd' checksum changed. Size changed, md5 changed."},
+ {timestamp:"2026-10-05T09:02:00.000Z",rule:{id:"60138",description:"New member added to local Administrators group.",level:12,groups:["windows","privilege_escalation"]},
+  agent:{id:"033",name:"WKS-055",ip:"10.0.1.55"},location:"WinEvtLog",decoder:{name:"windows_eventchannel"},
+  data:{user:"temp_intern",srcip:"10.0.1.55"},
+  full_log:"EventID=4732 A member was added to a security-enabled local group. Account Name: temp_intern Group: Administrators net localgroup administrators temp_intern /add"}
+];
+// Alert descriptions, Wazuh JSON, and any other log content are untrusted input and must never be
+// inserted into innerHTML unescaped — this is the single escaping helper used everywhere that happens.
+function escHtml(s){
+ return String(s===null||s===undefined?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// For values embedded inside an inline onclick="fn('...')" attribute: HTML-escaping alone isn't
+// enough there, since the value also sits inside a single-quoted JS string literal — a crafted
+// Alert ID containing a quote could break out of it. encodeURIComponent's charset is safe for both
+// contexts except it leaves "'" untouched, so that's stripped too.
+function uriSafe(s){ return encodeURIComponent(String(s===null||s===undefined?'':s)).replace(/'/g, '%27'); }
+function waGet(obj,path,def){ try{ const v=path.split('.').reduce((o,k)=>(o&&o[k]!==undefined)?o[k]:undefined, obj); return v===undefined||v===null?def:v; }catch(e){ return def; } }
+// Converts a raw Wazuh-style alert into the project's internal normalized format. Never throws on missing fields.
+function normalizeWazuhAlert(raw){
+ raw = raw || {};
+ const level = Number(waGet(raw,'rule.level',0)) || 0;
+ const severity = level>=12?'Critical':level>=9?'High':level>=6?'Medium':'Low';
+ return {
+  id: 'ALT-WAZUH-'+Math.floor(1000+Math.random()*9000),
+  timestamp: waGet(raw,'timestamp',''),
+  severity, waLevel: level,
+  source: 'Wazuh',
+  category: (waGet(raw,'rule.groups',[])||[]).join(', ') || 'Uncategorized',
+  ruleId: waGet(raw,'rule.id',''),
+  ruleDescription: waGet(raw,'rule.description','(no description provided)'),
+  user: waGet(raw,'data.user',''),
+  host: waGet(raw,'agent.name','') || waGet(raw,'location',''),
+  sourceIp: waGet(raw,'data.srcip','') || waGet(raw,'agent.ip',''),
+  destinationIp: waGet(raw,'data.dstip',''),
+  process: waGet(raw,'data.path',''),
+  commandLine: waGet(raw,'data.command',''),
+  eventId: waGet(raw,'rule.id',''),
+  rawLog: waGet(raw,'full_log','') || JSON.stringify(raw)
+ };
+}
+// Maps the normalized Wazuh alert onto the exact shape the existing intake form / fill() already expects.
+function wazuhToFormAlert(n){
+ return { aid:n.id, name:n.ruleDescription, source:'Wazuh', cat:n.category, user:n.user, host:n.host, srcip:n.sourceIp, dstip:n.destinationIp,
+  time:n.timestamp, eid:n.ruleId, asset:'Medium',
+  desc:(n.ruleDescription?n.ruleDescription+'. ':'')+n.rawLog+(n.commandLine?' CommandLine: '+n.commandLine:'') };
+}
+// Clean service abstraction — mock/demo data for now, shaped so a real backend can replace the bodies later
+// without changing any caller. A real implementation would call a server-side proxy that holds the
+// WAZUH_API_URL / WAZUH_API_USER / WAZUH_API_PASSWORD credentials — never the browser.
+const WazuhService = {
+ async getAlerts(){ return WAZUH_DEMOS; },
+ async getAlertById(id){ return WAZUH_DEMOS.find(a=>waGet(a,'rule.id','')===id) || null; },
+ normalizeAlert(raw){ return normalizeWazuhAlert(raw); },
+ async getAgents(){ return WAZUH_DEMOS.map(a=>({id:waGet(a,'agent.id',''), name:waGet(a,'agent.name',''), ip:waGet(a,'agent.ip','')})); },
+ async getRules(){ return WAZUH_DEMOS.map(a=>({id:waGet(a,'rule.id',''), description:waGet(a,'rule.description',''), level:waGet(a,'rule.level',0)})); }
+};
+let wazuhRawObj=null, wazuhNormObj=null, lastWazuhLevel=null;
+function loadWazuhDemo(idx){ el('wazuhPaste').value = JSON.stringify(WAZUH_DEMOS[idx], null, 2); validateWazuh(); }
+function wazuhFileUpload(input){
+ const file = input.files && input.files[0]; if(!file) return;
+ const reader = new FileReader();
+ reader.onload = e => { el('wazuhPaste').value = e.target.result; validateWazuh(); };
+ reader.onerror = () => { el('wazuhError').style.display='block'; el('wazuhError').textContent='⚠ Could not read that file.'; };
+ reader.readAsText(file);
+}
+function validateWazuh(){
+ const txt = (el('wazuhPaste').value||'').trim();
+ const errEl = el('wazuhError');
+ if(!txt){ errEl.style.display='block'; errEl.textContent='⚠ Paste or upload Wazuh JSON first — or pick a demo scenario above.'; el('wazuhSendBtn').disabled=true; return; }
+ let raw;
+ try{ raw = JSON.parse(txt); }
+ catch(e){ errEl.style.display='block'; errEl.textContent='⚠ Invalid JSON — '+e.message+'. Nothing was sent to the investigation workflow.'; el('wazuhSendBtn').disabled=true; return; }
+ errEl.style.display='none';
+ wazuhRawObj = raw;
+ wazuhNormObj = normalizeWazuhAlert(raw);
+ renderWazuhTabs(); switchWazuhTab('norm');
+ el('wazuhSendBtn').disabled=false;
+ addAudit('Wazuh alert validated & normalized: '+wazuhNormObj.id+' (rule '+wazuhNormObj.ruleId+')');
+}
+function renderWazuhTabs(){
+ el('wazuhRawView').textContent = JSON.stringify(wazuhRawObj, null, 2);
+ const n = wazuhNormObj;
+ el('wazuhNormView').innerHTML = [
+  'Alert ID: '+escHtml(n.id), 'Timestamp: '+escHtml(n.timestamp||'—'),
+  'Severity (from Wazuh rule level '+escHtml(n.waLevel)+'): '+escHtml(n.severity),
+  'Rule: '+escHtml(n.ruleId||'—')+' — '+escHtml(n.ruleDescription),
+  'User: '+escHtml(n.user||'—'), 'Host: '+escHtml(n.host||'—'),
+  'Source IP: '+escHtml(n.sourceIp||'—'), 'Destination IP: '+escHtml(n.destinationIp||'—'),
+  'Process: '+escHtml(n.process||'—'), 'Command: '+escHtml(n.commandLine||'—'),
+  'Category: '+escHtml(n.category)
+ ].map(l=>'<div style="margin-bottom:3px">'+l+'</div>').join('');
+}
+function switchWazuhTab(tab){
+ el('wazuhRawView').style.display = tab==='raw'?'block':'none';
+ el('wazuhNormView').style.display = tab==='norm'?'block':'none';
+ el('wazuhTabRaw').classList.toggle('active', tab==='raw');
+ el('wazuhTabNorm').classList.toggle('active', tab==='norm');
+}
+function sendWazuhToWorkflow(){
+ if(!wazuhNormObj){ alert('Validate & normalize a Wazuh alert first.'); return; }
+ const mapped = wazuhToFormAlert(wazuhNormObj);
+ fill(mapped, wazuhNormObj.severity+' (Wazuh rule level '+wazuhNormObj.waLevel+')');
+ runFull();
+ el('sec-intake').scrollIntoView({behavior:'smooth',block:'start'});
+ addAudit('Wazuh alert sent into existing L1 investigation workflow: '+wazuhNormObj.id);
+}
+
+let QUEUE = ALL_SAMPLES.map(a=>Object.assign({},a));
+function renderQueue(){
+ const sf=el('qFiltSev').value, stf=el('qFiltStatus').value, q=(el('qSearch').value||'').toLowerCase();
+ const rows = QUEUE.filter(a=>(!sf||a.qsev===sf)&&(!stf||a.status===stf)&&
+  (!q || (a.aid+a.host+a.user+a.srcip).toLowerCase().includes(q)));
+ document.querySelector('#queueTable tbody').innerHTML = rows.map(a=>
+  '<tr onclick="queueSelect(decodeURIComponent(\''+uriSafe(a.aid)+'\'))"><td><b>'+escHtml(a.aid)+'</b></td><td>'+escHtml(a.time)+'</td>'+
+  '<td><span class="pill '+escHtml(a.qsev)+'">'+escHtml(a.qsev)+'</span></td><td>'+escHtml(a.type)+'</td><td>'+escHtml(a.source)+'</td>'+
+  '<td>'+escHtml(a.user||'—')+'</td><td>'+escHtml(a.host)+'</td><td>'+escHtml(a.srcip)+'</td>'+
+  '<td><span class="sbadge '+escHtml(a.status.replace(' ',''))+'">'+escHtml(a.status)+'</span></td><td>'+escHtml(a.assigned)+'</td></tr>'
+ ).join('') || '<tr><td colspan="10" class="hint">No alerts match this filter.</td></tr>';
+}
+function queueSelect(aid){
+ const a = QUEUE.find(x=>x.aid===aid); if(!a) return;
+ if(a.status==='New'){ a.status='Investigating'; a.assigned='L1 Analyst'; renderQueue(); }
+ fill(a);
+ el('sec-intake').scrollIntoView({behavior:'smooth',block:'start'});
+}
+let HIST = []; let AUDIT = [];
+try{ const h=JSON.parse(localStorage.getItem('soc_hist')||'[]'); HIST = Array.isArray(h)?h.filter(r=>r&&typeof r==='object'&&r.id):[]; }catch(e){ HIST=[]; }
+try{ const a=JSON.parse(localStorage.getItem('soc_audit')||'[]'); AUDIT = Array.isArray(a)?a.filter(x=>typeof x==='string'):[]; }catch(e){ AUDIT=[]; }
+let currentAlert = null;
+let NOTES_STORE = {};
+try{ const n=JSON.parse(localStorage.getItem('soc_notes')||'{}'); NOTES_STORE = (n&&typeof n==='object'&&!Array.isArray(n))?n:{}; }catch(e){ NOTES_STORE={}; }
+function saveNoteForAlert(aid, text){ if(!aid) return; NOTES_STORE[aid]=text; try{ localStorage.setItem('soc_notes', JSON.stringify(NOTES_STORE)); }catch(e){} }
+
+function el(id){return document.getElementById(id);}
+function loadDemo(k){ if(!k) return; const a = SAMPLES[k][0]; fill(a); }
+function loadRandomSample(){ const a = ALL_SAMPLES[Math.floor(Math.random()*ALL_SAMPLES.length)]; fill(a); }
+function fill(a, waLevelLabel){
+ el('f_aid').value=a.aid; el('f_name').value=a.type||a.name||''; el('f_source').value=a.source; el('f_cat').value=a.cat;
+ el('f_user').value=a.user; el('f_host').value=a.host; el('f_srcip').value=a.srcip; el('f_dstip').value=a.dstip;
+ el('f_time').value=a.time; el('f_eid').value=a.eid; el('f_asset').value=a.asset; el('f_desc').value=a.desc;
+ el('f_notes').value = NOTES_STORE[a.aid] || ''; // notes persist per alert ID, not wiped on navigation
+ el('f_status').value = a.status || 'New'; lastLoggedStatus = el('f_status').value;
+ el('results').classList.remove('show'); el('formError').style.display='none';
+ currentAlert=null; lastWazuhLevel = waLevelLabel || null; setStep(-1); resetDecisionUI(); addAudit('Alert opened: '+a.aid); saveDraft();
+}
+function resetDecisionUI(){ ['decFP','decTP','decEsc','decMore'].forEach(id=>{ const b=el(id); if(b) b.classList.remove('active'); }); const db=el('decisionBox'); if(db) db.innerHTML=''; }
+function clearForm(){
+ if(el('f_desc').value && !confirm('Clear the form? Any unsaved analysis for this alert will be lost.')) return;
+ ['f_aid','f_user','f_host','f_srcip','f_dstip','f_time','f_eid','f_desc','f_notes','f_cat'].forEach(id=>el(id).value='');
+ el('f_asset').value='Medium'; el('f_srcsev').value='Low'; el('demoSel').value=''; el('results').classList.remove('show');
+ el('formError').style.display='none'; currentAlert=null; lastWazuhLevel=null; setStep(-1); resetDecisionUI(); saveDraft();
+}
+function addAudit(s){ AUDIT.push(new Date().toLocaleTimeString()+' — '+s); renderAudit(); try{localStorage.setItem('soc_audit',JSON.stringify(AUDIT));}catch(e){} }
+// Case management: a case's escalation/audit history is derived from the global audit log rather
+// than duplicated into separate per-case storage — every addAudit() call above already tags its
+// message with the case/alert ID, so this just filters by that ID.
+function getCaseAuditHistory(aid){ if(!aid) return []; return AUDIT.filter(a=>a.includes(aid)); }
+function renderAudit(){ el('audit').innerHTML = AUDIT.map(a=>'<li>'+a+'</li>').join(''); }
+function saveDraft(){ try{ localStorage.setItem('soc_draft', JSON.stringify({
+ aid:el('f_aid').value, name:el('f_name').value, source:el('f_source').value, cat:el('f_cat').value, user:el('f_user').value, host:el('f_host').value,
+ srcip:el('f_srcip').value, dstip:el('f_dstip').value, time:el('f_time').value, eid:el('f_eid').value, asset:el('f_asset').value,
+ status:el('f_status').value, srcsev:el('f_srcsev').value, desc:el('f_desc').value, notes:el('f_notes').value })); }catch(e){} }
+function restoreDraft(){ try{ const d=JSON.parse(localStorage.getItem('soc_draft')||'null'); if(!d) return;
+ for(const k in d){ const map={aid:'f_aid',name:'f_name',source:'f_source',cat:'f_cat',user:'f_user',host:'f_host',srcip:'f_srcip',dstip:'f_dstip',time:'f_time',eid:'f_eid',asset:'f_asset',status:'f_status',srcsev:'f_srcsev',desc:'f_desc',notes:'f_notes'};
+  if(map[k] && el(map[k])) el(map[k]).value = d[k]; } }catch(e){} }
+
+// Matches up to 3 ATT&CK techniques instead of silently picking one "best guess".
+function matchAllTech(text){
+ let hits = TECH.filter(t=>t.kw.some(k=>text.includes(k)))
+  .map(t=>Object.assign({},t,{matchedKw:t.kw.filter(k=>text.includes(k))}))
+  .sort((a,b)=>b.matchedKw.length-a.matchedKw.length || b.w-a.w)
+  .slice(0,3)
+  .map((t,i)=>Object.assign({},t,{conf: t.matchedKw.length>1?"High":(i===0?"Medium":"Low"), why:"Matched keyword(s): "+t.matchedKw.join(', ')}));
+ if(hits.length===0) hits=[{id:"Unmapped",name:"MITRE mapping unavailable — analyst review required",tactic:"—",w:2,
+  contain:["Escalate to senior analyst for technique mapping"],conf:"Low",why:"No matching indicators found in available evidence. Never invented to populate the UI."}];
+ return hits;
+}
+function ipList(text){ return (text.match(/\b\d{1,3}(\.\d{1,3}){3}\b/g)||[]); }
+function isPrivate(ip){ return /^10\./.test(ip)||/^192\.168\./.test(ip)||/^172\.(1[6-9]|2\d|3[01])\./.test(ip); }
+// Looks for an explicitly labeled source/destination before ever guessing by position.
+function extractIps(desc){
+ const ips = ipList(desc);
+ let src=(desc.match(/source (?:network )?address:?\s*(\d{1,3}(?:\.\d{1,3}){3})/i)||[])[1];
+ let dst=(desc.match(/destination (?:network )?address:?\s*(\d{1,3}(?:\.\d{1,3}){3})/i)||[])[1] || (desc.match(/->\s*(\d{1,3}(?:\.\d{1,3}){3})/)||[])[1];
+ const srcConfirmed=!!src, dstConfirmed=!!dst;
+ if(!src) src = ips[0];
+ if(!dst) dst = ips.find(ip=>ip && ip!==src);
+ return {src, dst, srcConfirmed, dstConfirmed, all: ips};
+}
+
+const STEP_NAMES = ["Intake","Parse","Analyze","Risk Score","Correlate","Checklist","MITRE Map","IOC Check","Verdict","Report/Escalate"];
+let stepsDone = -1;
+function setStep(n){ stepsDone=n; renderSteps(); }
+function renderSteps(){ const s=el('steps'); if(!s) return; s.innerHTML = STEP_NAMES.map((n,i)=>{
+ let cls = i<=stepsDone?'done':(i===stepsDone+1?'current':'');
+ if(i===8 && stepsDone===7) cls='requires'; // Verdict step: explicitly flagged as requiring the human analyst
+ return '<span class="stepchip '+cls+'">'+(i+1)+'. '+n+'</span>';
+}).join(''); }
+const CHECKLIST_ITEMS = ["Check surrounding logs ±30 minutes","Check previous authentication failures","Check successful login after failures","Check source IP on other hosts","Check process creation events","Check PowerShell activity","Check unusual account activity","Check network connections","Check maintenance/change window","Check related alerts"];
+const CORR_SETS = {
+ "T1110":["Multiple failed logins from same source","Repeated attempts within short window","Check for eventual success"],
+ "T1059.001":["Parent process spawned PowerShell","Encoded command executed","Outbound connection shortly after"],
+ "T1136.001":["Account created/elevated","Added to privileged group","First logon with new privileges"],
+ "T1204":["File written to disk","AV/EDR signature match","Outbound C2-style connection attempted"],
+ "T1490":["Shadow copy deletion command executed","Mass file modification/encryption observed","Ransom note or extension change detected"],
+ "T1003":["LSASS process accessed by unusual process","Credential material read from memory","Suspicious authentication using dumped credentials shortly after"],
+ "T1041":["Large data transfer to external host observed","Unusual protocol/port used for transfer","Destination has no prior communication history"],
+ "T1053.005":["Scheduled task created outside change window","Task configured to run with elevated privileges","Task binary path points to a non-standard location"],
+ "T1543.003":["New service installed outside change window","Service binary path unusual","Service configured for automatic start"],
+ "T1021.001":["RDP session established from a new source","Session duration longer than typical baseline","Follow-on activity performed within the session"],
+ "T1078":["Login from a new geographic location","Short time delta from prior login elsewhere","No VPN/travel notice on file"],
+ "T1091":["Removable media inserted","Device serial not on approved asset list","File copy activity to/from device"]
+};
+
+function validateForm(){
+ const missing=[];
+ if(!el('f_host').value.trim()) missing.push('Host');
+ if(!el('f_user').value.trim() && !el('f_srcip').value.trim()) missing.push('User or Source IP (at least one)');
+ if(!el('f_desc').value.trim()) missing.push('Raw log / description');
+ return missing;
+}
+
+function runFull(){
+ const missing = validateForm();
+ const errBox = el('formError');
+ if(missing.length){ errBox.style.display='block'; errBox.innerHTML='⚠ Cannot triage — missing required field(s): <b>'+missing.join(', ')+'</b>. A real queue would reject this alert as incomplete.'; return; }
+ errBox.style.display='none';
+ const desc = el('f_desc').value; const eid = el('f_eid').value; const full = (desc+' '+eid).toLowerCase();
+ addAudit('Triage started: '+(el('f_aid').value||'(no ID)'));
+
+ // --- parser ---
+ const ipInfo = extractIps(desc);
+ const extracted = {
+  user: (desc.match(/account name:\s*([a-zA-Z0-9._-]+)/i)||[])[1],
+  host: (desc.match(/workstation name:\s*([a-zA-Z0-9-]+)/i)||[])[1],
+  eid: (desc.match(/event\s*id[:=]?\s*(\d+)/i)||[])[1],
+  proc: (desc.match(/([\w.-]+\.exe)/i)||[])[1],
+  cmd: (desc.match(/command\s*line:\s*(.+)/i)||[])[1],
+  auth: /fail/i.test(desc)?'Failure':(/success/i.test(desc)?'Success':null),
+  srcip: ipInfo.srcConfirmed ? ipInfo.src : null,
+  dstip: ipInfo.dstConfirmed ? ipInfo.dst : null
+ };
+ const observed=[], inferred=[], unknown=[];
+ function bucket(label, extractedVal, formVal){
+  if(extractedVal) observed.push(label+': '+extractedVal);
+  else if(formVal) inferred.push(label+': '+formVal);
+  else unknown.push(label);
+ }
+ bucket('User', extracted.user, el('f_user').value);
+ bucket('Host', extracted.host, el('f_host').value);
+ bucket('Event ID', extracted.eid, el('f_eid').value);
+ bucket('Source IP', extracted.srcip, el('f_srcip').value || (ipInfo.src?ipInfo.src+' (unconfirmed — positional guess, verify)':null));
+ bucket('Dest IP', extracted.dstip, el('f_dstip').value || (ipInfo.dst?ipInfo.dst+' (unconfirmed — positional guess, verify)':null));
+ bucket('Process', extracted.proc, null);
+ bucket('Command line', extracted.cmd, null);
+ bucket('Auth result', extracted.auth, null);
+ el('obs').innerHTML = observed.length?observed.map(x=>'<div>✅ '+escHtml(x)+'</div>').join(''):'<span class="hint">none</span>';
+ el('inf').innerHTML = inferred.length?inferred.map(x=>'<div>➖ '+escHtml(x)+'</div>').join(''):'<span class="hint">none</span>';
+ el('unk').innerHTML = unknown.length?unknown.map(x=>'<div>❓ '+escHtml(x)+'</div>').join(''):'<span class="hint">none</span>';
+ addAudit('Logs parsed');
+
+ // --- MITRE (multi-technique) ---
+ const techs = matchAllTech(full);
+ const primary = techs[0];
+ el('mitre').innerHTML = techs.map(t=>
+  '<div style="margin-bottom:8px"><b>'+t.id+' — '+t.name+'</b> <span class="hint">('+t.tactic+')</span> <span class="pill gray">Confidence: '+t.conf+'</span>'+
+  '<p class="hint" style="margin:2px 0 0">Why it may apply: '+t.why+'</p></div>'
+ ).join('');
+
+ // --- IOCs (clickable, stateful) ---
+ const iocSeed = [];
+ ipInfo.all.forEach(ip=> iocSeed.push({label:ip, type:'ip', status: isPrivate(ip)?'Internal':'Unknown'}));
+ if(el('f_user').value) iocSeed.push({label:'user:'+el('f_user').value, type:'user', status:'Unknown'});
+ if(extracted.proc) iocSeed.push({label:'proc:'+extracted.proc, type:'process', status:'Unknown'});
+
+ // --- checklist ---
+ el('checklist').innerHTML = CHECKLIST_ITEMS.map((it,i)=>'<div class="chk"><span style="flex:1">'+it+'</span><select id="chk'+i+'"><option>Not Checked</option><option>Checked</option><option>Suspicious</option><option>Not Relevant</option></select></div>').join('');
+
+ // --- correlation (simulated) ---
+ const corr = CORR_SETS[primary.id] || ["No additional simulated correlation events for this technique — check SIEM manually."];
+ el('corr').innerHTML = corr.map((c,i)=>'<div class="tlitem">'+(el('f_time').value||'')+' (+'+i+'m) — '+c+'</div>').join('');
+ const confPct = {High:85,Medium:60,Low:35}[primary.conf]||40;
+ el('corrStats').innerHTML = '<span class="pill gray">Related events: '+(corr.length+1)+'</span> '+
+  '<span class="pill gray">Correlation window: 10 min</span> <span class="pill gray">Confidence: '+confPct+'%</span>';
+
+ // --- evidence for / against ---
+ const extIp = ipInfo.all.find(ip=>!isPrivate(ip));
+ const hasChangeWindow = /maintenance|change ticket|chg-/i.test(desc);
+ const failThenSuccess = /fail/i.test(desc) && /success/i.test(desc);
+ const evFor=[], evAgainst=[];
+ if(primary.id!=="Unmapped") evFor.push('Keyword match for '+primary.id+' ('+primary.name+'): '+primary.why);
+ if(extIp) evFor.push('External/untrusted IP observed: '+extIp);
+ if(failThenSuccess) evFor.push('Failed authentication attempts followed by a success');
+ if(!evFor.length) evFor.push('No strong supporting evidence found — review manually.');
+ if(hasChangeWindow) evAgainst.push('A change-ticket / maintenance-window reference was found in the log');
+ if(el('f_user').value && /admin|svc_|it_|ops/i.test(el('f_user').value)===false) evAgainst.push('Account does not appear to be privileged, which lowers blast-radius concern');
+ if(!evAgainst.length) evAgainst.push('No mitigating evidence found — review manually.');
+ el('evFor').innerHTML = evFor.map(x=>'<li>'+x+'</li>').join('');
+ el('evAgainst').innerHTML = evAgainst.map(x=>'<li>'+x+'</li>').join('');
+
+ // --- analysis text ---
+ const recommended = evFor.length>evAgainst.length && primary.id!=="Unmapped" ? 'Continue investigation; evidence leans suspicious — do not close without checking IOCs and the checklist.' : 'Insufficient evidence to confirm malicious activity yet — work the checklist before deciding.';
+ el('analysis').innerHTML = '<p><b>What happened?</b> '+escHtml(el('f_eid').value||'An alert')+' fired on '+escHtml(el('f_host').value||'the host')+' involving '+escHtml(el('f_user').value||'an unspecified user')+'.</p>'+
+  '<p><b>Why did it trigger?</b> Matched indicators for '+techs.map(t=>t.id+' ('+t.name+')').join(', ')+'.</p>'+
+  '<p><b>Missing information:</b> '+(unknown.length?unknown.join(', '):'None — all core fields observed or inferred.')+'</p>'+
+  '<p><b>Recommended next investigation step:</b> Work through the investigation checklist and IOC lookups below.</p>'+
+  '<p><b>Recommended L1 decision (AI suggestion, not final):</b> '+recommended+'</p>';
+
+ // --- build currentAlert and compute risk ---
+ currentAlert = {
+  techs, primary, ipInfo, extracted, unknown, iocs: iocSeed, escId: null,
+  verdict:null, confidence:null, reason:null, analystDecision:null, wazuhRuleLevel: lastWazuhLevel,
+  savedToHistory: false
+ };
+ renderIocs();
+ recalcRisk();
+ el('results').classList.add('show');
+ setStep(7);
+ renderSummary();
+ saveDraft();
+}
+// Feature 4: a single consolidated view of the alert — summary, evidence, risk, next steps,
+// notes and final decision — assembled from state already computed elsewhere, not recomputed.
+function renderSummary(){
+ const box = el('summaryBox');
+ if(!currentAlert){ box.innerHTML = 'Run triage above to populate this summary.'; return; }
+ const m = currentAlert.primary;
+ const evForCount = (el('evFor').innerHTML.match(/<li>/g)||[]).length;
+ const evAgainstCount = (el('evAgainst').innerHTML.match(/<li>/g)||[]).length;
+ const saveStatus = currentAlert.savedToHistory
+  ? '<span style="color:var(--low);font-weight:700">✓ Saved to history</span>'
+  : '<span style="color:var(--med);font-weight:700">● Unsaved changes — click "Save alert to history" to persist</span>';
+ box.innerHTML =
+  '<p><b>'+escHtml(el('f_name').value||'(unnamed alert)')+'</b> — '+escHtml(el('f_aid').value)+' on '+escHtml(el('f_host').value)+
+   ' ('+escHtml(el('f_user').value||'unspecified user')+') &nbsp; '+saveStatus+'</p>'+
+  '<p><b>Risk:</b> '+(currentAlert.score!=null?currentAlert.score+'/100 ('+currentAlert.band+')':'not yet calculated')+
+   ' — driven primarily by '+escHtml(m.name)+' ('+escHtml(m.id)+')</p>'+
+  '<p><b>Evidence:</b> '+evForCount+' point(s) supporting detection, '+evAgainstCount+' point(s) against</p>'+
+  '<p><b>Suggested next steps:</b> '+(m.contain||[]).slice(0,3).map(escHtml).join('; ')+'</p>'+
+  '<p><b>Analyst notes:</b> '+(el('f_notes').value?escHtml(el('f_notes').value):'<span class="hint">(none yet)</span>')+'</p>'+
+  '<p><b>Final analyst decision:</b> '+(currentAlert.analystDecision?escHtml(currentAlert.analystDecision):'<span class="hint">(not yet decided)</span>')+'</p>';
+ const caseHist = getCaseAuditHistory(el('f_aid').value);
+ if(caseHist.length){
+  box.innerHTML += '<p><b>Case history for '+escHtml(el('f_aid').value)+':</b></p><ul style="margin-top:2px">'+
+   caseHist.slice(-8).map(h=>'<li>'+escHtml(h)+'</li>').join('')+'</ul>';
+ }
+}
+
+function renderIocs(){
+ el('iocs').innerHTML = currentAlert.iocs.length ? currentAlert.iocs.map((o,i)=>
+  '<span class="ioc '+o.status+'" onclick="cycleIoc('+i+')">'+escHtml(o.label)+' — '+o.status+'</span>'
+ ).join('') : '<span class="hint">No indicators extracted.</span>';
+}
+function cycleIoc(i){
+ const order=['Unknown','Benign','Malicious','Internal'];
+ const cur = currentAlert.iocs[i].status;
+ currentAlert.iocs[i].status = order[(order.indexOf(cur)+1)%order.length];
+ currentAlert.savedToHistory = false;
+ renderIocs(); recalcRisk();
+ addAudit('IOC classification changed for '+(el('f_aid').value||'(unsaved)')+': '+currentAlert.iocs[i].label+' -> '+currentAlert.iocs[i].status);
+ if(typeof renderSummary==='function') renderSummary();
+}
+
+function recalcRisk(){
+ if(!currentAlert) return;
+ const desc = el('f_desc').value;
+ const match = currentAlert.primary;
+ let score=0; const factors=[];
+ const techPts = match.w*8; score+=techPts; factors.push('Technique severity ('+match.name+'): +'+techPts);
+ const assetPts = {Low:0,Medium:10,High:20,Critical:30}[el('f_asset').value]; score+=assetPts; factors.push('Asset criticality ('+el('f_asset').value+'): +'+assetPts);
+ if(/fail/i.test(desc) && /success/i.test(desc)){ score+=15; factors.push('Failed logins followed by success: +15'); }
+ const extIocs = currentAlert.iocs.filter(o=>o.type==='ip' && !isPrivate(o.label));
+ const unresolvedExt = extIocs.filter(o=>o.status==='Unknown'||o.status==='Malicious');
+ if(unresolvedExt.length){ score+=10; factors.push('External/untrusted IP not yet cleared ('+unresolvedExt.map(o=>o.label).join(', ')+'): +10'); }
+ else if(extIocs.length){ factors.push('External IP(s) present but confirmed Benign/Internal after lookup: +0'); }
+ const maliciousCount = currentAlert.iocs.filter(o=>o.status==='Malicious').length;
+ if(maliciousCount){ const pts=Math.min(30, maliciousCount*15); score+=pts; factors.push('Analyst-confirmed malicious IOC(s): +'+pts); }
+ score = Math.min(100, score);
+ const band = score>=76?'Critical':score>=51?'High':score>=26?'Medium':'Low';
+ el('riskNum').textContent=score; const rp=el('riskPill'); rp.textContent=band; rp.className='pill '+band;
+ el('riskFactors').innerHTML = factors.map(f=>'<li>'+f+'</li>').join('');
+ const srcSev = el('f_srcsev').value;
+ const sevRank={Informational:0,Low:1,Medium:2,High:3,Critical:4};
+ const bandRank={Low:1,Medium:2,High:3,Critical:4};
+ const flagEl = el('riskFlag');
+ if(Math.abs(sevRank[srcSev]-bandRank[band])>=2){
+  flagEl.innerHTML = '<div class="warnbox">⚠ Source-reported severity ('+srcSev+') and computed risk ('+band+') disagree significantly — reconcile before closing.</div>';
+ } else flagEl.innerHTML='';
+ const wrNote = el('wazuhRiskNote');
+ if(currentAlert.wazuhRuleLevel){
+  wrNote.innerHTML = '<b>Wazuh rule severity:</b> '+currentAlert.wazuhRuleLevel+' &nbsp; <b>AI risk score:</b> '+score+'/100 ('+band+'). Wazuh rule severity describes the detection rule itself; AI risk score is the contextual assessment of this specific alert. Kept intentionally separate.';
+ } else wrNote.innerHTML='';
+ currentAlert.score=score; currentAlert.band=band; currentAlert.factors=factors;
+ addAudit('Risk recalculated: '+score+' ('+band+')');
+ saveDraft();
+}
+
+function computeVerdict(){
+ if(!currentAlert){ alert('Run "Parse, analyze & triage" first.'); return; }
+ let tp=0; ['t1','t2','t3','t4','t5'].forEach(id=>{ if(el(id).checked) tp++; });
+ let suspicious=0, reviewed=0; const checklistResults=[];
+ for(let i=0;i<10;i++){ const s=el('chk'+i); const v=s?s.value:'Not Checked';
+  checklistResults.push({item:CHECKLIST_ITEMS[i], state:v});
+  if(v==='Suspicious') suspicious++; if(v!=='Not Checked') reviewed++; }
+ const completion = reviewed/10;
+ let verdict,confidence,reason;
+ if(tp>=4 || suspicious>=3){ verdict="True Positive"; reason="Multiple true-positive signals and/or suspicious checklist findings present."; }
+ else if(tp>=2 || suspicious>=1){ verdict="Needs Investigation"; reason="Some suspicious signals present but insufficient to confirm malicious intent."; }
+ else { verdict="False Positive"; reason="No strong true-positive signals found; evidence is consistent with benign activity."; }
+ confidence = completion>=0.5 ? (tp>=4||suspicious>=3?"High":"Medium") : "Low";
+ currentAlert.verdict=verdict; currentAlert.confidence=confidence; currentAlert.reason=reason; currentAlert.checklistResults=checklistResults; currentAlert.completion=completion;
+ let warn = completion<0.5 ? '<div class="warnbox">⚠ Only '+reviewed+'/10 checklist items reviewed. Confidence is capped at Low until the investigation is more complete — this verdict should not be treated as final.</div>' : '';
+ el('verdictBox').innerHTML = '<p><b>Decision:</b> '+verdict+' &nbsp; <b>Confidence:</b> '+confidence+'</p>'+
+  '<p><b>Reasoning:</b> '+reason+' ('+tp+'/5 TP signals, '+suspicious+' suspicious checklist items, '+reviewed+'/10 checklist items reviewed)</p>'+
+  '<p><b>Recommended next action:</b> '+(verdict==="True Positive"?"Proceed to containment and escalate to L2.":verdict==="Needs Investigation"?"Continue investigation; do not close yet.":"Document findings and close as false positive.")+'</p>'+warn;
+ addAudit('Verdict assigned: '+verdict+' (confidence: '+confidence+')');
+ setStep(8);
+ saveDraft();
+}
+
+let lastLoggedStatus = null;
+function logStatusChange(silent){
+ const s = el('f_status').value, aidTag = el('f_aid').value||'(unsaved)';
+ if(s===lastLoggedStatus) return;
+ lastLoggedStatus = s;
+ addAudit('Status changed to: '+s+' for '+aidTag + (s==='Resolved'?' (Case resolved: '+aidTag+')':''));
+ if(!silent) saveDraft();
+}
+function setDecision(label){
+ if(!currentAlert){ alert('Run triage first.'); return; }
+ const reason = (el('f_notes').value||'').trim();
+ const prior = currentAlert.analystDecision;
+ const isChange = prior && prior!==label;
+ // A reason is required whenever a decision is first set, and required again whenever it's changed.
+ if(!reason){
+  el('decisionBox').innerHTML = '<div class="errbox">⚠ A reason is required before recording "'+escHtml(label)+
+   '". Write it in Analyst Notes above, then click the decision again.</div>';
+  return;
+ }
+ currentAlert.analystDecision = label;
+ currentAlert.decisionReason = reason;
+ ['decFP','decTP','decEsc','decMore'].forEach(id=>el(id).classList.remove('active'));
+ const map={'False Positive':'decFP','True Positive':'decTP','Escalate to L2':'decEsc','Needs More Evidence':'decMore'};
+ el(map[label]).classList.add('active');
+ el('decisionBox').innerHTML = '<b>Analyst decision:</b> '+escHtml(label)+' — recorded '+new Date().toLocaleTimeString()+
+  (isChange?' <span class="hint">(changed from '+escHtml(prior)+')</span>':'')+
+  '<br><b>Reason:</b> '+escHtml(reason);
+ currentAlert.savedToHistory = false;
+ const aidTag = el('f_aid').value||'(unsaved)';
+ addAudit((isChange?'Analyst decision changed for '+aidTag+': '+prior+' → '+label:'Analyst decision recorded for '+aidTag+': '+label)+' — reason: '+reason);
+ if(label==='Escalate to L2'){
+  el('f_status').value='Escalated'; logStatusChange(true);
+  addAudit('Case escalated: '+aidTag);
+  // Live-sync the Queue and dashboard now, not only when the case is explicitly saved — this is
+  // what Priority 2 fixes: escalating no longer silently undercounts until a save happens.
+  const qItem = QUEUE.find(q=>q.aid===el('f_aid').value);
+  if(qItem){ qItem.status='Escalated'; qItem.assigned='L1 Analyst'; renderQueue(); }
+  renderDash();
+ }
+ renderSummary();
+ saveDraft();
+}
+function showOutput(text,label){
+ const o=el('output'); o.textContent=text; o.style.display='block';
+ el('outputLabel').textContent = '📋 '+label; el('outputBtns').style.display='flex';
+ o.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function copyOutput(){ navigator.clipboard.writeText(el('output').textContent).catch(()=>{}); }
+function downloadOutput(){
+ const blob = new Blob([el('output').textContent], {type:'text/plain'});
+ const a = document.createElement('a');
+ a.href = URL.createObjectURL(blob);
+ a.download = (el('f_aid').value||'alert')+'_'+Date.now()+'.txt';
+ a.click();
+}
+
+function genReport(){
+ if(!currentAlert){ alert('Run triage first.'); return; }
+ const m=currentAlert.primary;
+ const checklistLines = (currentAlert.checklistResults||CHECKLIST_ITEMS.map(it=>({item:it,state:'Not Checked'})))
+  .map(c=>'  - ['+c.state+'] '+c.item).join('\n');
+ const report = `INCIDENT REPORT (DEMO DATA)
+Alert ID: ${el('f_aid').value}   Source: ${el('f_source').value}
+Generated: ${new Date().toISOString()}
+
+EXECUTIVE SUMMARY
+  ${el('f_eid').value||'Alert'} on ${el('f_host').value} involving ${el('f_user').value||'unspecified user'}. Computed risk: ${currentAlert.band||'n/a'} (${currentAlert.score||'n/a'}/100). Source-reported severity: ${el('f_srcsev').value}.
+
+DETECTION
+  Alert source: ${el('f_source').value} | Category: ${el('f_cat').value}
+
+AFFECTED ASSET
+  Host: ${el('f_host').value}  Criticality: ${el('f_asset').value}
+
+TIMELINE
+  ${el('f_time').value}
+
+INDICATORS
+  Source IP: ${el('f_srcip').value||currentAlert.ipInfo.src||'n/a'}${currentAlert.ipInfo.srcConfirmed?'':' (unconfirmed, verify)'}  Destination IP: ${el('f_dstip').value||currentAlert.ipInfo.dst||'n/a'}${currentAlert.ipInfo.dstConfirmed?'':' (unconfirmed, verify)'}
+  IOC findings: ${currentAlert.iocs.map(o=>o.label+'='+o.status).join(', ')||'none'}
+
+EVIDENCE / RAW LOG
+  ${el('f_desc').value}
+
+MITRE ATT&CK MAPPING
+${currentAlert.techs.map(t=>'  - '+t.id+' - '+t.name+' ('+t.tactic+'), confidence: '+t.conf).join('\n')}
+
+RISK ASSESSMENT
+  Score: ${currentAlert.score}/100 (${currentAlert.band})
+${(currentAlert.factors||[]).map(f=>'  - '+f).join('\n')}
+
+L1 INVESTIGATION CHECKLIST
+${checklistLines}
+  Notes: ${el('f_notes').value||'(none)'}
+
+FINAL VERDICT
+  AI-suggested: ${currentAlert.verdict||'(not yet computed)'} (confidence: ${currentAlert.confidence||'n/a'})
+  L1 ANALYST DECISION (final): ${currentAlert.analystDecision||'(not yet selected — not final until an analyst chooses one)'}
+
+RECOMMENDED ACTIONS
+${(m.contain||[]).map(c=>'  - '+c).join('\n')}
+
+Analyst: ___________________`;
+ showOutput(report, 'Incident Report — '+(el('f_aid').value||'unsaved alert')); addAudit('Report generated'); setStep(9);
+}
+
+function genEscalation(){
+ if(!currentAlert){ alert('Run triage first.'); return; }
+ if(!currentAlert.escId) currentAlert.escId = 'INC-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*90000)+10000); // minted once, reused on repeat clicks
+ const checklistLines = (currentAlert.checklistResults||[]).map(c=>'  - ['+c.state+'] '+c.item).join('\n') || '  (checklist not yet completed)';
+ const t = `L1 → L2 ESCALATION TICKET (DEMO DATA)
+Incident ID: ${currentAlert.escId}
+Computed Severity: ${currentAlert.band||'n/a'}   Source-Reported Severity: ${el('f_srcsev').value}
+Alert Summary: ${el('f_eid').value} on ${el('f_host').value}
+Affected Host: ${el('f_host').value}
+Affected User: ${el('f_user').value}
+Timeline: ${el('f_time').value}
+Indicators: ${el('f_srcip').value||currentAlert.ipInfo.src||'n/a'} -> ${el('f_dstip').value||currentAlert.ipInfo.dst||'n/a'}
+IOC findings: ${currentAlert.iocs.map(o=>o.label+'='+o.status).join(', ')||'none'}
+Evidence: ${el('f_desc').value}
+Investigation Performed:
+${checklistLines}
+MITRE mapping: ${currentAlert.techs.map(t=>t.id).join(', ')}
+Risk scored: ${currentAlert.score}/100
+L1 Analyst Decision (final): ${currentAlert.analystDecision||'not yet selected by analyst'}
+Reason for Escalation: AI-suggested ${currentAlert.verdict||'Needs Investigation'} — ${currentAlert.reason||'requires L2 review'}
+Recommended Next Steps:
+${(currentAlert.primary.contain||[]).map(c=>'  - '+c).join('\n')}`;
+ showOutput(t, 'Escalation Ticket — '+currentAlert.escId); addAudit('Escalated to L2 as '+currentAlert.escId); setStep(9);
+ saveDraft();
+}
+
+function saveToHistory(){
+ if(!currentAlert){ alert('Run triage first.'); return; }
+ const missing = validateForm();
+ if(missing.length){
+  el('formError').style.display='block';
+  el('formError').innerHTML='⚠ Cannot save — missing required field(s): <b>'+missing.join(', ')+'</b>.';
+  return;
+ }
+ const aid = el('f_aid').value||('ALT-'+Date.now());
+ const existingIdx = HIST.findIndex(h=>h.id===aid);
+ // Avoid accidental overwriting of an existing saved case: require explicit confirmation.
+ if(existingIdx>=0 && !confirm('A case with ID "'+aid+'" is already saved. Overwrite it with the current investigation state (including IOC marks and risk score)?')) return;
+ const row = {
+  id:aid, name:el('f_name').value||'', time:el('f_time').value, host:el('f_host').value, user:el('f_user').value,
+  sev:currentAlert.band||'Low', risk:currentAlert.score||0, verdict:currentAlert.verdict||'Needs Investigation',
+  decision: currentAlert.analystDecision || '(none)', notes: el('f_notes').value||'', status:el('f_status').value,
+  source:el('f_source').value, cat:el('f_cat').value, srcip:el('f_srcip').value, dstip:el('f_dstip').value,
+  eid:el('f_eid').value, asset:el('f_asset').value, desc:el('f_desc').value,
+  // IOC marks saved per case so reopening restores them exactly, instead of resetting to Unknown.
+  iocs: (currentAlert.iocs||[]).map(o=>({label:o.label, type:o.type, status:o.status})),
+  // Evidence references: the exact supporting/against evidence shown at save time, stripped of
+  // markup. Case management requirement — preserved verbatim rather than only recomputed later.
+  evidenceFor: Array.from(el('evFor').innerHTML.matchAll(/<li>(.*?)<\/li>/g)).map(m=>m[1]),
+  evidenceAgainst: Array.from(el('evAgainst').innerHTML.matchAll(/<li>(.*?)<\/li>/g)).map(m=>m[1]),
+  mitreTechniques: (currentAlert.techs||[]).map(t=>t.id+' — '+t.name+' ('+t.conf+' confidence)'),
+  savedAt: new Date().toISOString()
+ };
+ if(existingIdx>=0){ HIST[existingIdx]=row; addAudit('Case updated: '+aid); }
+ else { HIST.unshift(row); addAudit('Case created: '+aid); }
+ let writeOk=true;
+ try{ localStorage.setItem('soc_hist', JSON.stringify(HIST)); }catch(e){ writeOk=false; }
+ if(!writeOk){
+  el('formError').style.display='block';
+  el('formError').innerHTML='⚠ Case saved for this session only — browser storage write failed (full, disabled, or private browsing). It will be lost on refresh.';
+ }
+ const qItem = QUEUE.find(q=>q.aid===aid);
+ if(qItem){ qItem.status = currentAlert.analystDecision==='Escalate to L2' ? 'Escalated' : 'Resolved'; qItem.assigned='L1 Analyst'; renderQueue(); }
+ currentAlert.savedToHistory = true;
+ renderDash(); renderTable(); renderSummary();
+}
+function clearHistory(){
+ if(!HIST.length) return;
+ if(!confirm('Clear all '+HIST.length+' saved alert(s) from history? This cannot be undone.')) return;
+ HIST=[]; try{localStorage.removeItem('soc_hist');}catch(e){} renderDash(); renderTable(); addAudit('Alert history cleared');
+}
+function renderDash(){
+ const dashEl = el('dash');
+ // Queue-level metrics: computed from the actual alert queue (every alert currently in the system).
+ const qTotal = QUEUE.length;
+ const qCritHigh = QUEUE.filter(a=>a.qsev==='Critical'||a.qsev==='High').length;
+ const qOpen = QUEUE.filter(a=>a.status==='Investigating').length;
+ const qEsc = QUEUE.filter(a=>a.status==='Escalated').length;
+ const queueRow = [['Total alerts',qTotal,'var(--accent)'],['Critical+High',qCritHigh,'var(--crit)'],
+  ['Open investigations',qOpen,'var(--med)'],['Escalated',qEsc,'var(--high)']];
+ function row(items){ return '<div class="dash">'+items.map(([l,v,col])=>'<div class="dcard" style="border-top-color:'+col+'"><b>'+v+'</b><span>'+l+'</span></div>').join('')+'</div>'; }
+ let html = '<div class="dashrowlabel">Alert queue (live)</div>'+row(queueRow);
+ if(!HIST.length){
+  html += '<div class="dempty">No cases saved to history yet — outcome metrics (True/False Positive) appear once a case is saved.</div>';
+ } else {
+  // Outcome metrics: from the analyst's actual recorded decision, not the AI's suggested verdict.
+  const c = {Critical:0,High:0,Medium:0,Low:0, tp:0, fp:0, ni:0, esc:0};
+  HIST.forEach(h=>{ c[h.sev]=(c[h.sev]||0)+1;
+   if(h.decision==='True Positive')c.tp++; else if(h.decision==='False Positive')c.fp++; else c.ni++;
+   if(h.decision==='Escalate to L2')c.esc++; });
+  const sevRow = [['Critical',c.Critical,'var(--crit)'],['High',c.High,'var(--high)'],['Medium',c.Medium,'var(--med)'],['Low',c.Low,'var(--low)']];
+  const outRow = [['True Pos.',c.tp,'var(--crit)'],['False Pos.',c.fp,'var(--low)'],['Needs more evid.',c.ni,'var(--med)'],['Escalated',c.esc,'var(--accent)']];
+  html += '<div class="dashrowlabel">Saved cases — by severity</div>'+row(sevRow)+
+   '<div class="dashrowlabel">Saved cases — by analyst decision</div>'+row(outRow);
+ }
+ dashEl.innerHTML = html;
+}
+function renderTable(){
+ const sf=el('filtSev').value, vf=el('filtVerdict').value, q=(el('histSearch').value||'').toLowerCase();
+ const rows = HIST.filter(h=>(!sf||h.sev===sf)&&(!vf||h.verdict===vf)&&(!q||(h.id+h.host+h.user).toLowerCase().includes(q)));
+ document.querySelector('#histTable tbody').innerHTML = rows.map(h=>
+  '<tr style="cursor:pointer" onclick="reopenCase(decodeURIComponent(\''+uriSafe(h.id)+'\'))" title="Click to reopen this case"><td><b>'+escHtml(h.id)+'</b></td><td>'+escHtml(h.time)+'</td><td>'+escHtml(h.host)+'</td><td>'+escHtml(h.user)+'</td><td><span class="pill '+escHtml(h.sev)+'">'+escHtml(h.sev)+'</span></td><td>'+escHtml(h.risk)+'</td><td>'+escHtml(h.decision||'(none)')+'</td><td>'+escHtml(h.status)+'</td></tr>'
+ ).join('') || '<tr><td colspan="8" class="hint">No alerts saved yet.</td></tr>';
+}
+// Reopens a saved case: repopulates the form, re-runs triage, then restores the exact IOC marks
+// that were saved with the case (Priority 1) before computing the final risk score — so the
+// reopened score reproduces the saved one rather than silently drifting from a reset IOC state.
+// The saved HIST row itself is never mutated here; only an explicit Save overwrites it.
+function reopenCase(aid){
+ const row = HIST.find(h=>h.id===aid); if(!row) return;
+ const mapped = { aid:row.id, name:row.name||'', source:row.source||'', cat:row.cat||'', user:row.user, host:row.host,
+  srcip:row.srcip||'', dstip:row.dstip||'', time:row.time, eid:row.eid||'', asset:row.asset||'Medium', desc:row.desc||'' };
+ fill(mapped);
+ el('f_notes').value = row.notes || '';
+ el('f_status').value = row.status || 'New'; lastLoggedStatus = el('f_status').value;
+ runFull();
+ if(Array.isArray(row.iocs) && currentAlert){
+  row.iocs.forEach(savedIoc=>{
+   const match = currentAlert.iocs.find(o=>o.label===savedIoc.label);
+   if(match) match.status = savedIoc.status;
+  });
+  renderIocs();
+  recalcRisk();
+ }
+ if(row.decision && row.decision!=='(none)') setDecision(row.decision);
+ // Nothing has actually changed from what was saved — restore the "saved" state rather than
+ // leaving the "unsaved" flag that setDecision()/recalcRisk() set as a side effect of reopening.
+ if(currentAlert) currentAlert.savedToHistory = true;
+ renderSummary();
+ const scoreMatches = currentAlert && currentAlert.score === row.risk;
+ el('sec-intake').scrollIntoView({behavior:'smooth',block:'start'});
+ addAudit('Case reopened: '+aid+(scoreMatches?' (risk score reproduced exactly: '+row.risk+')':' (recomputed risk '+(currentAlert?currentAlert.score:'?')+' differs from saved '+row.risk+' — saved value in history is unchanged)'));
+}
+renderDash(); renderTable(); renderAudit(); restoreDraft(); renderSteps(); renderQueue();
+['f_aid','f_name','f_source','f_cat','f_user','f_host','f_srcip','f_dstip','f_time','f_eid','f_asset','f_status','f_srcsev','f_desc','f_notes']
+ .forEach(id=>{ const e=el(id); if(e) e.addEventListener('input', saveDraft), e.addEventListener('change', saveDraft); });
+let noteWasEmptyAtFocus = true;
+el('f_notes').addEventListener('focus', ()=>{
+ const aid = el('f_aid').value;
+ noteWasEmptyAtFocus = !aid || !NOTES_STORE[aid] || NOTES_STORE[aid].trim()==='';
+});
+el('f_notes').addEventListener('input', ()=>{
+ const aid = el('f_aid').value; if(!aid) return;
+ saveNoteForAlert(aid, el('f_notes').value);
+ if(currentAlert){ currentAlert.savedToHistory = false; renderSummary(); }
+});
+el('f_notes').addEventListener('blur', ()=>{
+ const aid = el('f_aid').value, v=(el('f_notes').value||'').trim();
+ if(aid && v) addAudit('Investigation note '+(noteWasEmptyAtFocus?'added':'updated')+' for '+aid);
+});
+</script>
+</body>
+</html>
